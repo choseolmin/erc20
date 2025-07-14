@@ -1,36 +1,25 @@
-require("dotenv").config();
-const { ethers } = require("ethers");
+import { ethers } from "hardhat";
 
-// 📌 배포된 ERC-20 컨트랙트 주소
-const contractAddress = "0x160333145E1063ea9a66C43e1C840737181C7beC"; // 너의 실제 배포 주소 입력
+async function main() {
+    const [deployer] = await ethers.getSigners();
 
-// 📌 ABI 불러오기
-const contractArtifact = require("../artifacts/contracts/MyToken.sol/MyToken.json");
-const abi = contractArtifact.abi;
+    const tokenAddress = "0x5Dc994C7506e311227248Ed74d2b83b479584464"; // 배포된 ERC2612 주소
+    const myWalletAddress = "0x3E252b07c949f5065D59921e7C0fF6747745DEda"; // 받을 지갑 주소
 
-// 📌 카이로스 네트워크 프로바이더 설정
-const provider = new ethers.JsonRpcProvider("https://public-en-kairos.node.kaia.io");
+    const token = await ethers.getContractAt("ERC2612Contract", tokenAddress);
 
-// 📌 지갑 연결 (.env의 PRIVATE_KEY 사용)
-const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+    const amount = ethers.parseUnits("10", 18); // 10개 전송
+    const balanceBefore = await token.balanceOf(myWalletAddress);
+    console.log("💰 기존 잔액:", balanceBefore.toString());
 
-// 📌 스마트 컨트랙트 인스턴스 생성
-const contract = new ethers.Contract(contractAddress, abi, wallet);
-
-// 📌 ERC-20 transfer 호출 함수
-async function transferToken() {
-  try {
-    const toAddress = "0x5ba28312193C12AD43611aA81602d7e56Df578Ed"; // 전송할 지갑 주소
-    const amount = ethers.parseUnits("100", 18); // 1 토큰 (소수점 18자리 기준)
-
-    const tx = await contract.transfer(toAddress, amount);
+    const tx = await token.transfer(myWalletAddress, amount);
     await tx.wait();
 
-    console.log(`📌 Transfer 성공! TxHash: ${tx.hash}`);
-  } catch (error) {
-    console.error("❌ Transfer 실패:", error);
-  }
+    const balanceAfter = await token.balanceOf(myWalletAddress);
+    console.log("✅ 전송 완료 후 잔액:", balanceAfter.toString());
 }
 
-// 📌 실행
-transferToken();
+main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+});

@@ -1,18 +1,11 @@
 import { ethers } from 'hardhat';
-import { makeAbi } from './abiGenerator';
 
 async function main() {
-  const contractName = 'MyToken';
-
-  console.log(`Deploying contracts`);
-
-  const Contract = await ethers.getContractFactory(contractName);
-  const contract = await Contract.deploy();
-
-  await contract.waitForDeployment();
-
-  console.log(`Contract deployed at: ${contract.target}`);
-  await makeAbi(`${contractName}`, contract.target);
+  const [deployer] = await ethers.getSigners();
+  const Token = await ethers.getContractFactory("MPTContract");
+  const token = await Token.deploy();
+  await token.waitForDeployment();
+  console.log("Token deployed to:", await token.getAddress());
 }
 
 main().catch((error) => {
